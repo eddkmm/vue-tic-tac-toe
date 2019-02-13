@@ -12,6 +12,7 @@
           :key="index"
           :cell-id="index"
           :cell-value="cellArray[index].value"
+          :cell-played="lastCellPlayed === index"
           :cell-disabled="cellArray[index].disabled"
         />
         <h2 v-if="winner">{{winner !== 'TIE' ? `${winner} wins!` : 'Tie!'}}</h2>
@@ -36,6 +37,8 @@ export default {
       gameStarted: false,
       aiGame: false,
       playersTurn: '',
+      turnCount: 0,
+      lastCellPlayed: undefined,
       cellArray: _.times(9, (index) => {
         return {
           index,
@@ -51,20 +54,25 @@ export default {
       this.gameStarted = true
       this.playersTurn = aiGame ? 'O' : 'X'
       this.aiGame = aiGame
+      this.turnCount = 0
 
       this.processAiTurn()
     },
     processAiTurn: function () {
       if (this.playersTurn === 'O' && this.aiGame) {
-        const bestMove = this.minimax(this.cellArray, 'O')
+        console.log('processAiTurn')
 
-        this.processTurn(undefined, bestMove.index)
+        this.processTurn(undefined, this.turnCount ? this.minimax(this.cellArray, 'O').index : 4)
       }
     },
     processTurn: function (event, cellId) {
       if (this.winner || this.cellArray[cellId] === undefined || this.cellArray[cellId].disabled) {
         return
       }
+
+      this.lastCellPlayed = cellId
+
+      this.turnCount++
 
       this.$set(this.cellArray, cellId, {
         index: cellId,
@@ -117,6 +125,7 @@ export default {
 
       // an array to collect all the objects
       const moves = []
+      const ties = {}
 
       // loop through available spots
       for (let i = 0; i < availableCells.length; i++) {
@@ -132,18 +141,23 @@ export default {
         const result = this.minimax(clonedCellArray, player === 'O' ? 'X' : 'O')
         move.score = result.score
 
-        // reset the spot to empty
-        // clonedCellArray[j].value = ''
+        if (!ties[`${move.score}`]) {
+          ties[`${move.score}`] = []
+        }
 
-        // push the object to the array
+        // push the object to the array and keep track of ties (so we can randomly choose from them to give the human player a chance)
         moves.push(move)
+        ties[`${move.score}`].push(move)
       }
+
+      console.log(moves)
 
       // if it is the computer's turn loop over the moves and choose the move with the highest score
       let bestMove
+      let bestScore
 
       if (player === 'O') {
-        let bestScore = -10000
+        bestScore = -10000
 
         for (let i = 0; i < moves.length; i++) {
           if (moves[i].score > bestScore) {
@@ -153,7 +167,7 @@ export default {
         }
       } else {
         // else loop over the moves and choose the move with the lowest score
-        let bestScore = 10000
+        bestScore = 10000
 
         for (let i = 0; i < moves.length; i++) {
           if (moves[i].score < bestScore) {

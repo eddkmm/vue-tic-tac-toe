@@ -1,5 +1,5 @@
 <template>
-  <div class="ttt-cell" @click="$emit('cell-clicked', $event, cellId)">{{cellValue}}</div>
+  <div class="ttt-cell" :class="{'ttt-cell-played': cellPlayed}" @click="$emit('cell-clicked', $event, cellId)">{{cellValue}}</div>
 </template>
 
 <script>
@@ -8,6 +8,7 @@ export default {
   props: {
     cellId: Number,
     cellValue: String,
+    cellPlayed: Boolean,
     cellDisabled: Boolean
   }
 }
@@ -22,6 +23,10 @@ export default {
     justify-content: center;
     align-items: center;
     border: solid 1px;
+  }
+
+  .ttt-cell-played {
+    background-color: #dddddd;
   }
 
   .ttt-cell > input {
