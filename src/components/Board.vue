@@ -15,7 +15,10 @@
           :cell-played="lastCellPlayed === index"
           :cell-disabled="cellArray[index].disabled"
         />
-        <h2 v-if="winner">{{winner !== 'TIE' ? `${winner} wins!` : 'Tie!'}}</h2>
+        <div v-if="winner">
+          <h2>{{winner !== 'TIE' ? `${winner} wins!` : 'Tie!'}}</h2>
+          <button @click="$emit('reset-board', $event)">Play again</button>
+        </div>
       </div>
     </div>
     <div

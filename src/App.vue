@@ -1,7 +1,6 @@
 <template>
   <div id="app">
-    <!-- <img src="./assets/logo.png"> -->
-    <Board/>
+    <Board :key="boardKey" v-on:reset-board="boardKey = !boardKey"/>
   </div>
 </template>
 
@@ -10,6 +9,11 @@ import Board from './components/Board'
 
 export default {
   name: 'App',
+  data () {
+    return {
+      boardKey: false
+    }
+  },
   components: {
     Board
   }
