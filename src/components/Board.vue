@@ -34,6 +34,7 @@ export default {
   name: 'Board',
   data () {
     return {
+      fc: 0,
       gameStarted: false,
       aiGame: false,
       playersTurn: '',
@@ -52,7 +53,7 @@ export default {
   methods: {
     startGame: function (aiGame) {
       this.gameStarted = true
-      this.playersTurn = aiGame ? 'O' : 'X'
+      this.playersTurn = 'X'
       this.aiGame = aiGame
       this.turnCount = 0
 
@@ -60,9 +61,7 @@ export default {
     },
     processAiTurn: function () {
       if (this.playersTurn === 'O' && this.aiGame) {
-        console.log('processAiTurn')
-
-        this.processTurn(undefined, this.turnCount ? this.minimax(this.cellArray, 'O').index : 4)
+        this.processTurn(undefined, this.minimax(this.cellArray, 'O', 0).index)
       }
     },
     processTurn: function (event, cellId) {
@@ -109,22 +108,34 @@ export default {
         return false
       }
     },
-    minimax: function (clonedCellArray, player) {
-      clonedCellArray = _.cloneDeep(clonedCellArray)
+    minimax: function (cellArray, player, depth) {
+      if (this.fc > 1000) {
+        console.log('reached fc limit!')
+        return {
+          score: 0
+        }
+      }
 
-      const availableCells = this.getAvailableCells(clonedCellArray)
+      const availableCells = this.getAvailableCells(cellArray)
 
       // check for terminal states
-      if (this.isWinner(clonedCellArray, 'X')) {
-        return {score: -10}
-      } else if (this.isWinner(clonedCellArray, 'O')) {
-        return {score: 10}
+      if (this.isWinner(cellArray, 'X')) {
+        return {
+          score: -100 + depth
+        }
+      } else if (this.isWinner(cellArray, 'O')) {
+        return {
+          score: 100 - depth
+        }
       } else if (!availableCells.length) {
-        return {score: 0}
+        return {
+          score: 0
+        }
       }
 
       // an array to collect all the objects
       const moves = []
+      // choose randomly from a set of indices that have a tied score
       const ties = {}
 
       // loop through available spots
@@ -134,11 +145,13 @@ export default {
         const j = availableCells[i].index
         move.index = j
 
+        const clonedCellArray = _.cloneDeep(cellArray)
+
         // set the empty spot to the current player
         clonedCellArray[j].value = player
 
         // if collect the score resulted from calling minimax on the opponent of the current player
-        const result = this.minimax(clonedCellArray, player === 'O' ? 'X' : 'O')
+        const result = this.minimax(clonedCellArray, player === 'O' ? 'X' : 'O', depth + 1)
         move.score = result.score
 
         if (!ties[`${move.score}`]) {
@@ -146,11 +159,8 @@ export default {
         }
 
         // push the object to the array and keep track of ties (so we can randomly choose from them to give the human player a chance)
-        moves.push(move)
-        ties[`${move.score}`].push(move)
+        ties[`${move.score}`].push(moves.push(move) - 1)
       }
-
-      console.log(moves)
 
       // if it is the computer's turn loop over the moves and choose the move with the highest score
       let bestMove
@@ -162,7 +172,7 @@ export default {
         for (let i = 0; i < moves.length; i++) {
           if (moves[i].score > bestScore) {
             bestScore = moves[i].score
-            bestMove = i
+            bestMove = ties[`${moves[i].score}`][Math.floor(Math.random() * ties[`${moves[i].score}`].length)]
           }
         }
       } else {
@@ -172,7 +182,7 @@ export default {
         for (let i = 0; i < moves.length; i++) {
           if (moves[i].score < bestScore) {
             bestScore = moves[i].score
-            bestMove = i
+            bestMove = ties[`${moves[i].score}`][Math.floor(Math.random() * ties[`${moves[i].score}`].length)]
           }
         }
       }
